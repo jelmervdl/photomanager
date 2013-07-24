@@ -26,26 +26,42 @@ class PhotoListItemView extends Backbone.View
 		(jQuery @el).html @template @model.toJSON()
 
 class PhotoView extends Backbone.View
+	tagName: 'div'
+
+	initialize: ->
+		@el.id = 'photo-details'
+
+		(jQuery @el).click ->
+			@remove()
+
 	render: (eventName) ->
-		(jQuery @el).text "Photo " + @model.get 'path'
+		(jQuery @el).text("Photo " + @model.get 'path').show()
 
 class AppRouter extends Backbone.Router
-	initialize: ->
+	initialize: (callback) ->
 		@route '', 'list'
 		@route 'folders/*path', 'list'
 		@route 'photos/:id', 'photoDetails'
-	
+
+		@photoCollection = new PhotoCollection ''
+		@photoCollection.fetch success: ->
+			callback()
+
 	list: (folder) ->
-		@photoList = new PhotoCollection folder ? '2013'
+		if folder?
+			@photoList = new PhotoCollection folder
+		else
+			@photoList = @photoCollection
+
 		@photoListView = new PhotoListView model:@photoList
 		@photoList.fetch success: =>
 			(jQuery '#photo-list').html @photoListView.render()
 
 	photoDetails: (id) ->
 		console.log "photoDetails", id
-		@photo = @photoList.get id
+		@photo = @photoCollection.get id
 		@photoView = new PhotoView model:@photo
-		(jQuery '#photo-details').html @photoView.render()
+		(jQuery document.body).append @photoView.render()
 
-app = new AppRouter
-Backbone.history.start()
+app = new AppRouter ->
+	Backbone.history.start()
