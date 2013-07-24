@@ -5,7 +5,7 @@ import json
 
 class Photo(object):
 	def __init__(self, path):
-		self.id = md5(path).hexdigest()
+		self.id = md5(path.encode('utf-8')).hexdigest()
 		self.path = path
 
 class PhotoEncoder(json.JSONEncoder):
@@ -15,21 +15,28 @@ class PhotoEncoder(json.JSONEncoder):
 def is_photo(path):
 	return path[-3:].lower() == 'jpg'
 
+def jsonify(data):
+	return json.dumps(data, indent=2, cls=PhotoEncoder, ensure_ascii=False).encode('utf-8')
+
 app = Flask(__name__)
+
+@app.route('/api/photos/')
+def list_all_photos():
+	return list_photos('')
 
 @app.route('/api/photos/<path:folder>')
 def list_photos(folder):
 	try:
-		photo_fs = OSFS('~/Dropbox/Photos/' + folder)
+		photo_fs = OSFS('~/Dropbox/Photos/Organized/' + folder)
 		photos = []
 
 		for photo in photo_fs.walkfiles():
 			if is_photo(photo):
 				photos.append(Photo(photo))
 
-		return json.dumps(photos, indent=2, cls=PhotoEncoder)
+		return jsonify(photos)
 	except ResourceNotFoundError as err:
-		return json.dumps({'error': str(err)})
+		return jsonify({'error': unicode(err)})
 
 if __name__ == '__main__':
 	app.run(debug=True)
