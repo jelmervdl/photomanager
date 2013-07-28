@@ -31,11 +31,13 @@ class PhotoView extends Backbone.View
 	initialize: ->
 		@el.id = 'photo-details'
 
+		@template = _.template jQuery('#tpl-photo-details').text()
+
 		(jQuery @el).click ->
 			@remove()
 
 	render: (eventName) ->
-		(jQuery @el).text("Photo " + @model.get 'path').show()
+		(jQuery @el).html(@template @model.toJSON()).show()
 
 class AppRouter extends Backbone.Router
 	initialize: (callback) ->
